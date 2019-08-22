@@ -179,7 +179,7 @@ class Game < Player
 
         loop do
             monitor()
-            turn_switch %= 4
+            turn_switch %= @num_of_player
             skip = false
 
             puts "#{turn_switch + 1}.: #{@turn_label[turn_switch]}"
