@@ -93,7 +93,7 @@ class Game < Player
         show_card(@my_deck)
     end
     
-    def choose_card(deck)
+    def player_choose_card(deck)
         limit_deck = deck.length
         can_draw = true
         pass = false
@@ -106,9 +106,7 @@ class Game < Player
             int_card = select_card.to_i
 
             if(can_draw == true && select_card == "d" || select_card == "D")
-                draw = draw_card()
-
-                puts "Your draw: [ color: #{draw[:color]} | value #{draw[:value]}]"
+                draw = draw_card("You draw")
                 @my_deck[:deck].push(draw)
 
                 monitor()
@@ -148,12 +146,27 @@ class Game < Player
         name = @turn_label[turn_switch]
 
         fnd_crd = find_card(deck, @top_card)
+        fnd_spc = find_card(deck, {color: "black", value: ""})
 
         if(fnd_crd[0] == true)
             @top_card = @deck_players[turn_switch][:deck].delete_at(fnd_crd[1])
             puts "#{name}: choose[ color: #{@top_card[:color]} | value: #{@top_card[:value]}]"
+
+        elsif(fnd_spc[0] == true)
+            @top_card = @deck_players[turn_switch][:deck].delete_at(fnd_spc[1])
+            puts "#{name}: choose[ color: #{@top_card[:color]} | value: #{@top_card[:value]}]"
+
         else
             puts "#{name}: no card!"
+            bot_draw_card = draw_card("#{name} draw card", false)
+
+            if(check_card(bot_draw_card, @top_card) == true)
+                @top_card = bot_draw_card
+                puts "#{name}: choose[ color: #{bot_draw_card[:color]} | value: #{bot_draw_card[:value]} ]"
+                
+            else
+                @deck_players[turn_switch][:deck].push(bot_draw_card)
+            end
         end
     end
 
@@ -166,9 +179,18 @@ class Game < Player
         end
     end
 
-    def draw_card
+    def draw_card(massage, show_card = true)
         generate_deck_uno()
-        return @deck_uno.pop()
+
+        draw_card = @deck_uno.pop()
+
+        if(show_card == true)
+            puts "#{massage}: [ color: #{draw_card[:color]} | value: #{draw_card[:value]} ]"
+        else
+            puts "#{massage}: [?]"
+        end
+
+        return draw_card
     end
 
     def turn_player
@@ -188,7 +210,7 @@ class Game < Player
                 find_card = find_card(@my_deck[:deck], @top_card)
                 
                 if(find_card[0] == true)
-                    new_deck = choose_card(@my_deck[:deck])
+                    new_deck = player_choose_card(@my_deck[:deck])
 
                     if(new_deck[1] == "pass") 
                         puts "Player: Pass!"
@@ -203,10 +225,8 @@ class Game < Player
                         puts "Card dose not match!"
                     end
                 else
-                    draw_card = draw_card()
+                    draw_card = draw_card("You draw")
                     @my_deck[:deck].push(draw_card)
-
-                    puts "You draw: [ color: #{draw_card[:color]} value: #{draw_card[:value]} ]"
 
                     skip == true
                     STDIN.getc

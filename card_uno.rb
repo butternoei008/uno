@@ -48,7 +48,7 @@ class Card
         result = false
 
         deck.collect do |card|
-            if(card[:color] == find_card[:color])
+            if(card[:color] == find_card[:color] || card[:color] == "black")
                 result = true
                 break
             elsif(card[:value] == find_card[:value])
@@ -63,8 +63,20 @@ class Card
     end
 
     def check_card(card, top_card)
-        if(card[:color] == top_card[:color] || card[:value] == top_card[:value])
+        if(card[:color] == top_card[:color] || card[:value] == top_card[:value] || card[:color] == "black")
             return true
+        else
+            return false
+        end
+    end
+
+    def check_spacial_card(top_card)
+        if(top_card[:color] == "black")
+            if(top_card[:value] == "Wild_draw")
+                return "Wild_draw"
+            elsif(top_card[:value] == "draw_four")
+                return "draw_four"
+            end
         else
             return false
         end
