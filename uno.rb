@@ -29,13 +29,15 @@ end
 
 class Game < Player
     def initialize
-        @num_of_player = self.num_of_player
-        @deck_uno = self.deck_uno
+        @num_of_player = self.num_of_player()
+        @deck_uno = self.deck_uno()
         @top_card = []
 
         @deck_players = []
         @my_deck = []
         @turn_label = self.random_turn(@num_of_player)
+
+        @card_effect = {value: "no_effect"}
     end
 
     def dealt_cards
@@ -49,7 +51,7 @@ class Game < Player
     end
 
     def set_deck
-        decks = dealt_cards
+        decks = dealt_cards()
         players = @turn_label
 
         deck_players = []
@@ -129,6 +131,9 @@ class Game < Player
 
                 if(check_card(deck[int_card], @top_card))
                     @top_card = deck.delete_at(int_card)
+
+                    @card_effect[:value] = effect_card(@top_card)
+
                     return [deck, true]
                     break
                 else
@@ -150,11 +155,11 @@ class Game < Player
 
         if(fnd_crd[0] == true)
             @top_card = @deck_players[turn_switch][:deck].delete_at(fnd_crd[1])
-            puts "#{name}: choose[ color: #{@top_card[:color]} | value: #{@top_card[:value]}]"
+            puts "#{name}: choose[ color: #{@top_card[:color]} | value: #{@top_card[:value]} ]"
 
         elsif(fnd_spc[0] == true)
             @top_card = @deck_players[turn_switch][:deck].delete_at(fnd_spc[1])
-            puts "#{name}: choose[ color: #{@top_card[:color]} | value: #{@top_card[:value]}]"
+            puts "#{name}: choose[ color: #{@top_card[:color]} | value: #{@top_card[:value]} ]"
 
         else
             puts "#{name}: no card!"
@@ -168,6 +173,8 @@ class Game < Player
                 @deck_players[turn_switch][:deck].push(bot_draw_card)
             end
         end
+
+        @card_effect[:value] = effect_card(@top_card)
     end
 
     def generate_deck_uno
@@ -197,16 +204,39 @@ class Game < Player
         require "io/console"
 
         turn_switch = 0
-        revers = false
+        revers = false  #false = ++, true = --
+        @card_effect[:value] = effect_card(@top_card)
 
         loop do
             monitor()
             turn_switch %= @num_of_player
             skip = false
-
             puts "#{turn_switch + 1}.: #{@turn_label[turn_switch]}"
 
-            if(@turn_label[turn_switch] == "Player")
+            if(@card_effect[:value] != "no_effect" && @card_effect[:value] != "revers")
+                if(@card_effect[:value] == "skip")
+                    puts "#{@turn_label[turn_switch]} turn crossed"
+                    skip = true
+
+                elsif(@card_effect[:value] == "draw_two")
+                    puts "#{@turn_label[turn_switch]} draw two"
+                    
+                    if(@turn_label[turn_switch] == "Player")
+                        (1..2).each do 
+                            @turn_label[turn_switch][:deck].push("You draw")
+                        end
+                    else
+                        (1..2).each do 
+                            bot_draw_card = draw_card("#{@turn_label[turn_switch]} draw card", false)
+                            @deck_players[turn_switch][:deck].push(bot_draw_card)
+                        end
+                    end
+                end
+                
+                STDIN.getc
+                @card_effect[:value] = "no_effect"
+
+            elsif(@turn_label[turn_switch] == "Player")
                 find_card = find_card(@my_deck[:deck], @top_card)
                 
                 if(find_card[0] == true)
@@ -215,12 +245,8 @@ class Game < Player
                     if(new_deck[1] == "pass") 
                         puts "Player: Pass!"
                         skip == true
-                    end
-
-                    if(new_deck[1] == true)
+                    elsif(new_deck[1] == true)
                         @my_deck[:deck] = new_deck[0]
-                    elsif(new_deck[1] == "skip")
-                        skip = true
                     elsif(new_deck[1] == false)
                         puts "Card dose not match!"
                     end
@@ -236,13 +262,25 @@ class Game < Player
                 STDIN.getc
             end
 
-            revers == false ? turn_switch += 1: turn_switch -= 1
-            skip == true ? next : skip == false
+            if(@card_effect[:value] == "revers")
+                if(revers == false)
+                    revers = true
+                else
+                    revers = false
+                end
+                
+                puts "turn revers!"
+                @card_effect[:value] = "no_effect"
+            end
+
+            revers == false ? turn_switch += 1 : turn_switch -= 1
+            skip == true ? next : skip = false
         end
     end
     
     def play
         @top_card = @deck_uno.pop()
+        @card_effect[:value] = effect_card(@top_card)
 
         set_deck()
         set_my_deck()
