@@ -16,11 +16,11 @@ class Player < Card
     end
 
     def random_turn(num_of_player)
-        player_list = ["Player", "Butter", "Fat", "Cheese"]
+        player_lists = ["Player", "Butter", "Fat", "Cheese"]
         turn_order = []
 
         (0..num_of_player - 1).each do |i|
-            turn_order.push(player_list[i])
+            turn_order.push(player_lists[i])
         end
 
         return turn_order.shuffle
@@ -94,7 +94,13 @@ class Game < Player
 
         show_card(@my_deck)
     end
-    
+
+    def check_wild_card(name)
+        if(@top_card[:value] == "wild_draw" || @top_card[:value] == "draw_four")
+            @top_card[:color] = wild_color(name)
+        end
+    end
+
     def player_choose_card(deck)
         limit_deck = deck.length
         can_draw = true
@@ -110,7 +116,7 @@ class Game < Player
             if(can_draw == true && select_card == "d" || select_card == "D")
                 draw = draw_card("You draw")
                 @my_deck[:deck].push(draw)
-
+                
                 monitor()
                 limit_deck = @my_deck[:deck].length
                 can_draw = false
@@ -126,7 +132,6 @@ class Game < Player
                 return [deck, "pass"]
                 break
             elsif(int_card > 0 && int_card <= limit_deck)
-                
                 int_card -= 1
 
                 if(check_card(deck[int_card], @top_card))
@@ -142,7 +147,6 @@ class Game < Player
             else
                 puts "Can't select a card. Select no more than #{limit_deck} !!!"
             end
-           
         end
     end
 
@@ -200,11 +204,42 @@ class Game < Player
         return draw_card
     end
 
+    def draw_effect(turn_switch, num)                
+        if(@turn_label[turn_switch] == "Player")
+            (1..num).each do 
+                draw_card = draw_card("#{@turn_label[turn_switch]} draw card")
+                @my_deck[:deck].push(draw_card)
+            end
+        else
+            (1..num).each do
+                bot_draw_card = draw_card("#{@turn_label[turn_switch]} draw card", false)
+                @deck_players[turn_switch][:deck].push(bot_draw_card)
+            end
+        end
+    end
+
+    def is_special_card
+        if(@top_card[:color] == "black")
+            @top_card[:color] = ["red", "yellow", "green", "blue"].sample
+        end
+    end
+
+    def player_pass(pass, new_deck)
+        if(pass == "pass") 
+            puts "Player: Pass!"
+            return true
+        elsif(pass == true)
+            @my_deck[:deck] = new_deck
+            return false
+        end
+    end
+
     def turn_player
         require "io/console"
 
         turn_switch = 0
-        revers = false  #false = ++, true = --
+        revers = false      #false = ++, true = --
+        is_special_card()   #If first card is a special card to assign color
         @card_effect[:value] = effect_card(@top_card)
 
         loop do
@@ -220,45 +255,42 @@ class Game < Player
 
                 elsif(@card_effect[:value] == "draw_two")
                     puts "#{@turn_label[turn_switch]} draw two"
+                    draw_effect(turn_switch, 2)
                     
-                    if(@turn_label[turn_switch] == "Player")
-                        (1..2).each do 
-                            @turn_label[turn_switch][:deck].push("You draw")
-                        end
-                    else
-                        (1..2).each do 
-                            bot_draw_card = draw_card("#{@turn_label[turn_switch]} draw card", false)
-                            @deck_players[turn_switch][:deck].push(bot_draw_card)
-                        end
-                    end
+                elsif(@card_effect[:value] == "draw_four")
+                    puts "#{@turn_label[turn_switch]} draw four"
+                    draw_effect(turn_switch, 4)
                 end
-                
+
                 STDIN.getc
                 @card_effect[:value] = "no_effect"
 
             elsif(@turn_label[turn_switch] == "Player")
-                find_card = find_card(@my_deck[:deck], @top_card)
+                find_card = find_card(@my_deck[:deck], @top_card) #if player have a card
+                new_deck = nil
                 
                 if(find_card[0] == true)
                     new_deck = player_choose_card(@my_deck[:deck])
-
-                    if(new_deck[1] == "pass") 
-                        puts "Player: Pass!"
-                        skip == true
-                    elsif(new_deck[1] == true)
-                        @my_deck[:deck] = new_deck[0]
-                    elsif(new_deck[1] == false)
-                        puts "Card dose not match!"
-                    end
+                    skip = player_pass(new_deck[1], new_deck[0])
+                    check_wild_card(@turn_label[turn_switch]) #Assign color for card if top card is special card
                 else
                     draw_card = draw_card("You draw")
                     @my_deck[:deck].push(draw_card)
 
-                    skip == true
+                    if(check_card(draw_card, @top_card))
+                        monitor()
+                        new_deck = player_choose_card(@my_deck[:deck])
+                        skip = player_pass(new_deck[1], new_deck[0])
+                        check_wild_card(@turn_label[turn_switch])
+                    end
+                    
                     STDIN.getc
                 end
+                
             else
                 bot_choose_card(turn_switch)
+                check_wild_card(@turn_label[turn_switch])
+                
                 STDIN.getc
             end
 

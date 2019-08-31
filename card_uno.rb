@@ -2,7 +2,7 @@ class Card
     def deck_uno
         uno = { deck: [] }
 
-        colors = ["red", "yellow","green", "blue"]
+        colors = ["red", "yellow", "green", "blue"]
         special_cards = ["wild_draw", "draw_four"]
 
         colors.collect do |zero_color|
@@ -35,8 +35,40 @@ class Card
             return "revers"
         elsif(card[:value] == "draw_two")
             return "draw_two"
+        elsif(card[:value] == "draw_four")
+            return "draw_four"
         else
             return "no_effect"
+        end
+    end
+
+    def wild_color(name)
+        colors = ["red", "yellow", "green", "blue"]
+
+        if(name == "Player")
+            i = 0;
+            colors.collect do |color|
+                puts "[#{i + 1}]#{color}"
+                i += 1
+            end
+            
+            loop do
+                print "Choose color on top card: "
+                choose_color = gets.chomp().to_i
+        
+                if(choose_color > 0 && choose_color <= 4)
+                    puts "#{name} choose color: #{colors[choose_color - 1]}"
+                    return colors[choose_color - 1]
+                    break
+                else
+                    puts "Can't choose a color. choose 1 - 4 only!!!"
+                end
+            end
+        else
+            bot_choose_color = colors.sample
+            puts "#{name} choose color: #{bot_choose_color}"
+            
+            return bot_choose_color
         end
     end
 
@@ -77,18 +109,6 @@ class Card
     def check_card(card, top_card)
         if(card[:color] == top_card[:color] || card[:value] == top_card[:value] || card[:color] == "black")
             return true
-        else
-            return false
-        end
-    end
-
-    def check_spacial_card(top_card)
-        if(top_card[:color] == "black")
-            if(top_card[:value] == "Wild_draw")
-                return "Wild_draw"
-            elsif(top_card[:value] == "draw_four")
-                return "draw_four"
-            end
         else
             return false
         end
