@@ -105,11 +105,23 @@ class Game < Player
         limit_deck = deck.length
         can_draw = true
         pass = false
-
+        
         loop do
+            uno_status = @my_deck[:deck].length == 2 ? true : false
+            uno_notify = uno_status == true ? "[UNO!]" : nil
+
             puts can_draw == true ? "\n[d]Draw card" : nil
-            print "Choose card from your deck: "
+            print "Choose card from your deck#{uno_notify}: "
             select_card = gets.chomp
+
+            if(uno_status == true)
+                if(select_card == "uno" || select_card == "UNO")
+                    uno_status = false
+                    uno_notify = nil
+                    print "Choose card from your deck#{uno_notify}: "
+                    select_card = gets.chomp
+                end
+            end
 
             int_card = select_card.to_i
 
@@ -138,6 +150,13 @@ class Game < Player
                     @top_card = deck.delete_at(int_card)
 
                     @card_effect[:value] = effect_card(@top_card)
+
+                    # Player forgot uno!
+                    if(uno_status == true)
+                        puts "You didn't do UNO!"
+                        draw = draw_card("You draw")
+                        @my_deck[:deck].push(draw)
+                    end
 
                     return [deck, true]
                     break
@@ -239,7 +258,7 @@ class Game < Player
 
         turn_switch = 0
         revers = false      #false = ++, true = --
-        is_special_card()   #If first card is a special card to assign color
+        is_special_card()   #If first card is special card to assign color
         @card_effect[:value] = effect_card(@top_card)
 
         loop do
