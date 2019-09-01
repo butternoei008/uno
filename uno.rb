@@ -172,18 +172,19 @@ class Game < Player
     def bot_choose_card(turn_switch)
         deck = @deck_players[turn_switch][:deck]
         name = @turn_label[turn_switch]
+        
+        uno_status = deck.length == 2 ? true : false
+        bot_uno = uno_status == true ? "\n#{name} UNO!\n" : nil
 
         fnd_crd = find_card(deck, @top_card)
         fnd_spc = find_card(deck, {color: "black", value: ""})
 
         if(fnd_crd[0] == true)
+            print bot_uno
             @top_card = @deck_players[turn_switch][:deck].delete_at(fnd_crd[1])
             puts "#{name}: choose[ color: #{@top_card[:color]} | value: #{@top_card[:value]} ]"
 
-        elsif(fnd_spc[0] == true)
-            @top_card = @deck_players[turn_switch][:deck].delete_at(fnd_spc[1])
-            puts "#{name}: choose[ color: #{@top_card[:color]} | value: #{@top_card[:value]} ]"
-
+            @card_effect[:value] = effect_card(@top_card)
         else
             puts "#{name}: no card!"
             bot_draw_card = draw_card("#{name} draw card", false)
@@ -192,12 +193,12 @@ class Game < Player
                 @top_card = bot_draw_card
                 puts "#{name}: choose[ color: #{bot_draw_card[:color]} | value: #{bot_draw_card[:value]} ]"
                 
+                @card_effect[:value] = effect_card(@top_card)
             else
                 @deck_players[turn_switch][:deck].push(bot_draw_card)
             end
         end
 
-        @card_effect[:value] = effect_card(@top_card)
     end
 
     def generate_deck_uno
@@ -259,7 +260,6 @@ class Game < Player
         turn_switch = 0
         revers = false      #false = ++, true = --
         is_special_card()   #If first card is special card to assign color
-        @card_effect[:value] = effect_card(@top_card)
 
         loop do
             monitor()
@@ -281,8 +281,8 @@ class Game < Player
                     draw_effect(turn_switch, 4)
                 end
 
-                STDIN.getc
                 @card_effect[:value] = "no_effect"
+                STDIN.getc
 
             elsif(@turn_label[turn_switch] == "Player")
                 find_card = find_card(@my_deck[:deck], @top_card) #if player have a card
