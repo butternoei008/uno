@@ -176,12 +176,11 @@ class Game < Player
         uno_status = deck.length == 2 ? true : false
         bot_uno = uno_status == true ? "\n#{name} UNO!\n" : nil
 
-        fnd_crd = find_card(deck, @top_card)
-        fnd_spc = find_card(deck, {color: "black", value: ""})
+        find_card = find_card(deck, @top_card)
 
-        if(fnd_crd[0] == true)
+        if(find_card[0] == true)
             print bot_uno
-            @top_card = @deck_players[turn_switch][:deck].delete_at(fnd_crd[1])
+            @top_card = @deck_players[turn_switch][:deck].delete_at(find_card[1])
             puts "#{name}: choose[ color: #{@top_card[:color]} | value: #{@top_card[:value]} ]"
 
             @card_effect[:value] = effect_card(@top_card)
@@ -191,6 +190,7 @@ class Game < Player
 
             if(check_card(bot_draw_card, @top_card) == true)
                 @top_card = bot_draw_card
+                print bot_uno
                 puts "#{name}: choose[ color: #{bot_draw_card[:color]} | value: #{bot_draw_card[:value]} ]"
                 
                 @card_effect[:value] = effect_card(@top_card)
@@ -254,10 +254,19 @@ class Game < Player
         end
     end
 
+    def result(deck)
+        if(deck.length == 0)
+            return true
+        else
+            return false
+        end
+    end
+
     def turn_player
         require "io/console"
-
         turn_switch = 0
+        end_game = false
+
         revers = false      #false = ++, true = --
         is_special_card()   #If first card is special card to assign color
 
@@ -306,11 +315,19 @@ class Game < Player
                     STDIN.getc
                 end
                 
+                end_game = result(@my_deck[:deck])
             else
                 bot_choose_card(turn_switch)
                 check_wild_card(@turn_label[turn_switch])
+
+                end_game = result(@deck_players[turn_switch][:deck])
                 
                 STDIN.getc
+            end
+
+            if(end_game == true)
+                puts "#{@turn_label[turn_switch]} WINNER!!"
+                break
             end
 
             if(@card_effect[:value] == "revers")
@@ -323,6 +340,7 @@ class Game < Player
                 puts "turn revers!"
                 @card_effect[:value] = "no_effect"
             end
+
 
             revers == false ? turn_switch += 1 : turn_switch -= 1
             skip == true ? next : skip = false
