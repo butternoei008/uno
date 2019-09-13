@@ -133,7 +133,7 @@ class Game < Player
                 limit_deck = @my_deck[:deck].length
                 can_draw = false
 
-                if(draw[:color] == @top_card[:color] || draw[:value] == @top_card[:value])
+                if(draw[:color] == @top_card[:color] || draw[:value] == @top_card[:value] || draw[:color] == "black")
                     print "\n[p]Pass"
                     pass = true
                 else
