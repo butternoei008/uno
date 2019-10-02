@@ -77,7 +77,7 @@ class Card
         result = false
         
         deck.collect do |card|
-            if(card[:color] == search_card[:color] && card[:color] == search_card[:color]) 
+            if(card[:color] == search_card[:color] && card[:value] == search_card[:value]) 
                 result = true
             end
 

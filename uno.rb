@@ -1,3 +1,4 @@
+require 'ruby2d'
 require_relative "card_uno.rb"
 
 class Player < Card
@@ -357,5 +358,6 @@ class Game < Player
     end
 end
 
+show
 uno = Game.new()
 uno.play
